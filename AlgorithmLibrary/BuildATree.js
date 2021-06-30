@@ -89,12 +89,30 @@ BasicTree.prototype.addControls =  function()
 	this.findButton.onclick = this.findCallback.bind(this);
 	this.printButton = addControlToAlgorithmBar("Button", "Print");
 	this.printButton.onclick = this.printCallback.bind(this);
+	this.leftButton = addControlToAlgorithmBar("Button", "Left");
+	this.leftButton.onclick = this.leftCallback.bind(this);
+	this.rightButton = addControlToAlgorithmBar("Button", "Right");
+	this.rightButton.onclick = this.rightCallback.bind(this);
+	this.alertButton = addControlToAlgorithmBar("Button", "Show Move Set");
+	this.alertButton.onclick = this.alertCallback.bind(this);
 }
 
 BasicTree.prototype.reset = function()
 {
 	this.nextIndex = 1;
 	this.treeRoot = null;
+}
+
+BasicTree.prototype.leftCallback = function(event) {
+	this.move('left');
+}
+
+BasicTree.prototype.rightCallback = function(event) {
+	this.move('right');
+}
+
+BasicTree.prototype.alertCallback = function(event) {
+	alert(moveSet);
 }
 
 BasicTree.prototype.insertCallback = function(event)
@@ -303,35 +321,22 @@ BasicTree.prototype.insert = function(elem, tree)
 	this.cmd("SetHighlight", tree.graphicID, 0);
 	this.cmd("SetHighlight", elem.graphicID, 0);
 
-	if (tree.left == null)
-	{
+	// Given - moveSet - execute moves
+
+	if(moveSet.length == 0) {
+		this.cmd("SetText", 0, "Please enter a valid path");
+	} else {
+	var pop = moveSet.shift();
+
+	if(pop == 'left') {
+		if(tree.left == null) {
 			this.cmd("SetText", 0,"Found null tree, inserting element");
 
 			this.cmd("SetHighlight", elem.graphicID, 0);
 			tree.left=elem;
 			elem.parent = tree;
 			this.cmd("Connect", tree.graphicID, elem.graphicID, BasicTree.LINK_COLOR);
-	}
-	else if (tree.right == null)
-	{
-			this.cmd("SetText",  0, "Found null tree, inserting element");
-			this.cmd("SetHighlight", elem.graphicID, 0);
-			tree.right=elem;
-			elem.parent = tree;
-			this.cmd("Connect", tree.graphicID, elem.graphicID, BasicTree.LINK_COLOR);
-			elem.x = tree.x + BasicTree.WIDTH_DELTA/2;
-			elem.y = tree.y + BasicTree.HEIGHT_DELTA
-			this.cmd("Move", elem.graphicID, elem.x, elem.y);
-	}
-	else {
-		if (this.countLength(tree.left) > this.countLength(tree.right)) {
-			this.cmd("SetText",  0, "Looking at right subtree");
-			//Move right
-			this.cmd("CreateHighlightCircle", this.highlightID, BasicTree.HIGHLIGHT_CIRCLE_COLOR, tree.x, tree.y);
-			this.cmd("Move", this.highlightID, tree.right.x, tree.right.y);
-			this.cmd("Step");
-			this.cmd("Delete", this.highlightID);
-			this.insert(elem, tree.right);
+			moveSet = [];
 		} else {
 			this.cmd("SetText", 0,  "Looking at left subtree");
 			//Move left
@@ -341,14 +346,34 @@ BasicTree.prototype.insert = function(elem, tree)
 			this.cmd("Delete", this.highlightID);
 			this.insert(elem, tree.left);
 		}
+	} else {
+		if(tree.right == null) {
+			this.cmd("SetText",  0, "Found null tree, inserting element");
+			this.cmd("SetHighlight", elem.graphicID, 0);
+			tree.right=elem;
+			elem.parent = tree;
+			this.cmd("Connect", tree.graphicID, elem.graphicID, BasicTree.LINK_COLOR);
+			elem.x = tree.x + BasicTree.WIDTH_DELTA/2;
+			elem.y = tree.y + BasicTree.HEIGHT_DELTA
+			this.cmd("Move", elem.graphicID, elem.x, elem.y);
+			moveSet = [];
+		} else {
+			this.cmd("SetText",  0, "Looking at right subtree");
+			//Move right
+			this.cmd("CreateHighlightCircle", this.highlightID, BasicTree.HIGHLIGHT_CIRCLE_COLOR, tree.x, tree.y);
+			this.cmd("Move", this.highlightID, tree.right.x, tree.right.y);
+			this.cmd("Step");
+			this.cmd("Delete", this.highlightID);
+			this.insert(elem, tree.right);
+		}
 	}
 }
-
-//Maverick's Algorithm to Determine which path is left-most and least amount of leaves.
-BasicTree.prototype.countLength = function(tree) {
-	if(tree == null) return 0;
-	if(tree.left == null && tree.right == null) return 1;
-	return 1 + Math.min(this.countLength(tree.left), this.countLength(tree.right));
+}
+//Maverick's move algorithm
+var moveSet = [];
+BasicTree.prototype.move = function(direction) {
+	moveSet.push(direction);
+	console.log(moveSet);
 }
 
 BasicTree.prototype.deleteElement = function(deletedValue)
@@ -645,6 +670,9 @@ BasicTree.prototype.disableUI = function(event)
 	this.findField.disabled = true;
 	this.findButton.disabled = true;
 	this.printButton.disabled = true;
+	this.leftButton.disabled = true;
+	this.rightButton.disabled = true;
+	this.alertButton.disabled = true;
 }
 
 BasicTree.prototype.enableUI = function(event)
@@ -656,6 +684,9 @@ BasicTree.prototype.enableUI = function(event)
 	this.findField.disabled = true;
 	this.findButton.disabled = true;
 	this.printButton.disabled = true;
+	this.leftButton.disabled = false;
+	this.rightButton.disabled = false;
+	this.alertButton.disabled = false;
 }
 
 
